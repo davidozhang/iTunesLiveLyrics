@@ -6,7 +6,6 @@ Author: David Zhang
 Started: August 2, 2014
 Last Updated: August 5, 2014
 Version: 1.0 (Updates to come later!)
-
 (C) Copyright David Zhang, 2014.
 All lyrics fetched through the app belong to respective artists, owners, Lyrics Wiki and Gracenote. I do not own any of the lyrics contents.
 '''
@@ -115,28 +114,33 @@ def getFirstLine(currentArtist, currentTrack):
 	
 	return buf.readline().replace('\n','').replace('[...]','')
 
-#-------------------------------------------MAIN PROGRAM--------------------------------------------#
+try:
+	oldArtist= iTunes.currentTrack().artist()
+	oldTrack= iTunes.currentTrack().name()
+	oldAlbum=iTunes.currentTrack().album()
+	oldGenre=iTunes.currentTrack().genre()
 
-oldArtist= iTunes.currentTrack().artist()
-oldTrack= iTunes.currentTrack().name()
-oldAlbum=iTunes.currentTrack().album()
-oldGenre=iTunes.currentTrack().genre()
+	songInfo(oldArtist, oldTrack, oldAlbum, oldGenre)
+	firstLine=getFirstLine(oldArtist, oldTrack)
+	detectLyrics(oldArtist, oldTrack, firstLine)
 
-songInfo(oldArtist, oldTrack, oldAlbum, oldGenre)
-firstLine=getFirstLine(oldArtist, oldTrack)
-detectLyrics(oldArtist, oldTrack, firstLine)
+	while True:
+		time.sleep(2)
+		currentArtist= iTunes.currentTrack().artist()
+		currentTrack= iTunes.currentTrack().name()
+		currentAlbum=iTunes.currentTrack().album()
+		currentGenre=iTunes.currentTrack().genre()
 
-while True:
-	time.sleep(2)
-	currentArtist= iTunes.currentTrack().artist()
-	currentTrack= iTunes.currentTrack().name()
-	currentAlbum=iTunes.currentTrack().album()
-	currentGenre=iTunes.currentTrack().genre()
+		if currentArtist!=oldArtist or currentTrack!=oldTrack:
+			songInfo(currentArtist, currentTrack, currentAlbum, currentGenre)
+			firstLine=getFirstLine(currentArtist, currentTrack)
+			detectLyrics(currentArtist, currentTrack, firstLine)
 
-	if currentArtist!=oldArtist or currentTrack!=oldTrack:
-		songInfo(currentArtist, currentTrack, currentAlbum, currentGenre)
-		firstLine=getFirstLine(currentArtist, currentTrack)
-		detectLyrics(currentArtist, currentTrack, firstLine)
-
-	oldArtist=currentArtist
-	oldTrack=currentTrack
+		oldArtist=currentArtist
+		oldTrack=currentTrack
+except TypeError:
+	print ""
+	print "------------------------------------------------------------"
+	print "| iTunesLiveLyrics detected no active iTunes song session. |"
+	print "| Play your iTunes song then reload the client. Thanks!    |"
+	print "------------------------------------------------------------"
