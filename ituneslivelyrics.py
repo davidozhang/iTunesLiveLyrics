@@ -9,17 +9,18 @@ Last Updated: Jan 25, 2015
 All lyrics fetched through the app belong to respective artists, owners,
 Lyrics Wiki and Gracenote. I do not own any of the lyrics contents.
 '''
+import re
+import StringIO
+import time
+import urllib
+
+import requests
 
 from Foundation import *
 from ScriptingBridge import *
-from bs4 import BeautifulSoup as bs
-import time
-import re
-import urllib
-import requests
-import StringIO
 
-iTunes = SBApplication.applicationWithBundleIdentifier_("com.apple.iTunes")
+from bs4 import BeautifulSoup as bs
+
 
 class iTunesLiveLyricsSession:
 
@@ -114,6 +115,7 @@ def wrap(lst):
 	print border+'\n'
 
 def main():
+	iTunes = SBApplication.applicationWithBundleIdentifier_("com.apple.iTunes")
 	try:
 		wrap(['Welcome to iTunesLiveLyrics client!', 'Version: 2.0'])
 		session = iTunesLiveLyricsSession()
