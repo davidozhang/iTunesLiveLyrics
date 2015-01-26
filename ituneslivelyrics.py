@@ -85,7 +85,6 @@ def html(root, artist, track):
 
 def sanitize(html, firstLine):
 	result = html[html.index(firstLine):html.index('<p>NewPP')]
-	print html.index(firstLine)
 	return str(bs(result.replace('<br/>','\n')).text.encode('utf_8'))
 
 def preview(url):
