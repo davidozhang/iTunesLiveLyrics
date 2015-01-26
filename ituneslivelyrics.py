@@ -1,13 +1,13 @@
 #!/usr/bin/python
 
 '''
-iTunes Live Lyrics Mac Client
+iTunes Live Lyrics Mac Terminal Client
 Author: David Zhang
-Started: August 2, 2014
-Last Updated: Jan 24, 2015
-Version: 1.1 (Updates to come later!)
+Version: 2.0
+Last Updated: Jan 25, 2015
 (C) Copyright David Zhang, 2015.
-All lyrics fetched through the app belong to respective artists, owners, Lyrics Wiki and Gracenote. I do not own any of the lyrics contents.
+All lyrics fetched through the app belong to respective artists, owners,
+Lyrics Wiki and Gracenote. I do not own any of the lyrics contents.
 '''
 
 from Foundation import *
@@ -19,151 +19,120 @@ import urllib
 import requests
 import StringIO
 
-iTunes=SBApplication.applicationWithBundleIdentifier_("com.apple.iTunes")
+iTunes = SBApplication.applicationWithBundleIdentifier_("com.apple.iTunes")
 
-def queryConstructor(currentArtist, currentTrack, callAPI):
-	
-	artistQuery = ''
-	songQuery = ''
-	symbol = ''
-	if not callAPI:
-		symbol = ':'
-	
-	for i in range (0, len(currentArtist.split())):
-                if i==len(currentArtist.split())-1:
-                	artistQuery+=currentArtist.split()[i]+symbol
-                else:
-                	artistQuery+=currentArtist.split()[i]+'_'
-        for j in range (0, len(currentTrack.split())):
-                if j==len(currentTrack.split())-1:
-                	songQuery+=currentTrack.split()[j]
-                else:
-                	songQuery+=currentTrack.split()[j]+'_'
-	
-	return artistQuery, songQuery
+class iTunesLiveLyricsSession:
 
-def songInfo(currentArtist, currentTrack, currentAlbum, currentGenre):
+	def query(self):
+		apiFunctions = {'preview': 'getSong', 'hometown': 'getHometown'}
+		artistQuery = queryFormat(self.artist)
+		trackQuery = queryFormat(self.track)
+		for key, function in apiFunctions.iteritems():
+			apiURL = '{0}api.php?func={1}&artist={2}&song={3}&fmt=text'.format(
+				self.root,
+				function,
+				urllib.quote(artistQuery),
+				urllib.quote(trackQuery),
+			)
+			if key=='preview' and preview(apiURL)=='Not found':
+				self.override=True
+			elif key=='hometown' and preview(apiURL)=='':
+				self.result[key] = 'N/A'
+			else:
+				self.result[key] = preview(apiURL)
+		if not self.override:
+			self.result['lyrics'] = sanitize(
+										html(
+											self.root,
+											artistQuery,
+											trackQuery,
+										),
+										self.result['preview'],
+									)
 
-	border = ''
-	max = 0
+	def header(self):
+		lst = ['NOW PLAYING: {0} - {1}'.format(self.artist, self.track),
+			   'Album: '+self.album,
+			   'Genre: '+self.genre,
+			   'Hometown: '+self.result['hometown']]
+		wrap(lst)
 
-	displayList = [
-		'NOW PLAYING: '+currentArtist+' - '+currentTrack,
-		'Album: '+currentAlbum, 'Genre: '+currentGenre,
-		'Artist Hometown: '+getHometown(currentArtist,currentTrack),
-	]
-	for i in displayList:
-		if len(i)>max:
-			max=len(i)
+	def lyrics(self):
+		print self.result.get('lyrics', 'N/A')
 
-	for i in range (0,max): border+='-'
-        border+='----'
+	def displaySession(self):
+		self.header()
+		if self.override:
+			print "No lyrics found!\n"
+		else:
+			self.lyrics()
 
-	max+=4
-	print '\n'+border
-	for j in displayList:
-		display='| '+j
-		while len(display)<max-1:
-			display+=' '
-		display+='|'
-		print display
-	print border+'\n'
+	def __init__(self, *args, **kwargs):
+		self.artist = kwargs.get('artist','N/A')
+		self.track = kwargs.get('track', 'N/A')
+		self.album = kwargs.get('album', 'N/A')
+		self.genre = kwargs.get('genre', 'N/A')
+		self.override = False
+		self.root = 'http://lyrics.wikia.com/'
+		self.result={}
+		if len(kwargs)!=0:
+			self.query()
+			self.displaySession()
 
-def lyricsNotFound(currentArtist, currentTrack):
-
-	diagnoseFirstLine = getFirstLine(currentArtist, currentTrack)
-
-	if '(' in currentTrack or ')' in currentTrack or '[' in currentTrack or ']' in currentTrack:	
-		trackRemoveBrackets = re.sub(r'\[.*\]','',currentTrack)
-		trackRemoveBrackets = re.sub(r'\(.*\)','',trackRemoveBrackets)
-	
-		firstLine = getFirstLine(currentArtist, trackRemoveBrackets)
-		detectLyrics(currentArtist, trackRemoveBrackets, firstLine)
-	elif 'ft.' in currentArtist:
-		currentArtist = currentArtist[:currentArtist.index('ft.')].strip()
-		if 'ft.' in currentTrack:
-			currentTrack = currentTrack[:currentTrack.index('ft.')].strip()
-		firstLine = getFirstLine(currentArtist, currentTrack)
-		detectLyrics(currentArtist, currentTrack,firstLine)
-	else:
-		print "No Lyrics Found.. Sorry!"
-	
-def detectLyrics(currentArtist, currentTrack, firstLine):
-
-	if firstLine=='Not found':
-		lyricsNotFound(currentArtist, currentTrack)
-	else:
-		displayLyrics(currentArtist, currentTrack, extractHTML(currentArtist, currentTrack,firstLine))
-
-def displayLyrics(currentArtist, currentTrack, soup):
-
-	if firstLine not in soup or '<p>NewPP limit report' not in soup:
-		lyricsNotFound(currentArtist, currentTrack)
-	else:
-		print soup[soup.index(firstLine):soup.index('<p>NewPP limit report')].replace('<br/>','\n').replace('<i>','').replace('</i>','').replace('<b>','').replace('</b>','').replace('<!--','').strip()
-
-def extractHTML(currentArtist, currentTrack, firstLine):
-	
-	artistQuery,songQuery = queryConstructor(currentArtist, currentTrack, False)
-	r = requests.get('http://lyrics.wikia.com/'+artistQuery+songQuery)
+def html(root, artist, track):
+	r = requests.get(root+artist+':'+track)
 	return str(bs(r.text)).decode('utf_8')
 
-def getHometown(currentArtist, currentTrack):
+def sanitize(html, firstLine):
+	result = html[html.index(firstLine):html.index('<p>NewPP')]
+	print html.index(firstLine)
+	return str(bs(result.replace('<br/>','\n')).text.encode('utf_8'))
 
-	urlRoot = 'http://lyrics.wikia.com/api.php?func=getHometown&artist='
-	artistQuery, songQuery = queryConstructor(currentArtist, currentTrack, True)
-	r = requests.get(urlRoot+artistQuery+'&song='+songQuery+'&fmt=text')
-	buf = StringIO.StringIO(bs(r.text).get_text())
-	
-	if buf.readline().replace('\n','')=='':
-		return 'N/A'	
-	else: 
-		return buf.readline().replace('\n','')
-
-def getFirstLine(currentArtist, currentTrack):
-
-	urlRoot = 'http://lyrics.wikia.com/api.php?func=getSong&artist='
-	artistQuery, songQuery = queryConstructor(currentArtist, currentTrack, True)
-	artistQuery = urllib.quote(artistQuery)
-	songQuery = urllib.quote(songQuery)
-	r = requests.get(urlRoot+artistQuery+'&song='+songQuery+'&fmt=text')
-	buf = StringIO.StringIO(bs(r.text).get_text())
-	
+def preview(url):
+	r = requests.get(url)
+	buf = StringIO.StringIO(bs(r.text).text)
 	return buf.readline().replace('\n','').replace('[...]','')
 
-try:
-	oldArtist = iTunes.currentTrack().artist()
-	oldTrack = iTunes.currentTrack().name()
-	oldAlbum = iTunes.currentTrack().album()
-	oldGenre = iTunes.currentTrack().genre()
+def queryFormat(item):
+	result=''
+	for i in range (0, len(item.split())):
+		result+=item.split()[i]
+		if i!=len(item.split())-1:
+			result+='_'
+	return result
 
-	songInfo(oldArtist, oldTrack, oldAlbum, oldGenre)
-	firstLine = getFirstLine(oldArtist, oldTrack)
-	detectLyrics(oldArtist, oldTrack, firstLine)
+def wrap(lst):
+	border = ''
+	max = 0
+	for i in lst:
+		if len(i)>max:
+			max = len(i)
+	border+='*'*(max+4)
+	max+=4
+	print '\n'+border
+	for j in lst:
+		print '| '+j+' '*(max-1-len('| '+j))+'|'
+	print border+'\n'
 
-	while True:
-		time.sleep(2)
-		currentArtist = iTunes.currentTrack().artist()
-		currentTrack = iTunes.currentTrack().name()
-		currentAlbum = iTunes.currentTrack().album()
-		currentGenre = iTunes.currentTrack().genre()
-
-		if currentArtist!=oldArtist or currentTrack!=oldTrack:
-			songInfo(currentArtist, currentTrack, currentAlbum, currentGenre)
-			firstLine = getFirstLine(currentArtist, currentTrack)
-			detectLyrics(currentArtist, currentTrack, firstLine)
-
-		oldArtist = currentArtist
-		oldTrack = currentTrack
-except TypeError:
-	print ""
-	print "------------------------------------------------------------"
-	print "| iTunesLiveLyrics detected no active iTunes song session. |"
-	print "| Play your iTunes song then reload the client. Thanks!    |"
-	print "------------------------------------------------------------"
-
-except:
-	print ""
-	print "--------------------------------------------"
-	print "| iTunesLiveLyrics Client has been closed. |"
-	print "--------------------------------------------"
+def main():
+	try:
+		wrap(['Welcome to iTunesLiveLyrics client!', 'Version: 2.0'])
+		session = iTunesLiveLyricsSession()
+		while True:
+			time.sleep(2)
+			itunes = iTunes.currentTrack()
+			if itunes.artist()!=session.artist or itunes.name()!=session.track:
+				session = iTunesLiveLyricsSession(
+					artist=itunes.artist(),
+					track=itunes.name(),
+					album=itunes.album(),
+					genre=itunes.genre(),
+				)
+	except TypeError:
+		wrap(['iTunesLiveLyrics detected no active iTunes song session.',
+			  'Play your iTunes song then reload the client. Thanks!'])
+	except:
+		wrap(['iTunesLiveLyrics client has been closed.'])
+	
+if __name__=="__main__":
+	main()
