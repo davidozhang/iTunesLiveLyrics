@@ -9,18 +9,18 @@ Last Updated: Jan 25, 2015
 All lyrics fetched through the app belong to respective artists, owners,
 Lyrics Wiki and Gracenote. I do not own any of the lyrics contents.
 '''
-import re
-import StringIO
-import time
-import urllib
-
-import requests
-
 from Foundation import *
 from ScriptingBridge import *
 
 from bs4 import BeautifulSoup as bs
 
+import time
+import re
+import urllib
+import requests
+import StringIO
+
+iTunes = SBApplication.applicationWithBundleIdentifier_("com.apple.iTunes")
 
 class iTunesLiveLyricsSession:
 
@@ -37,6 +37,8 @@ class iTunesLiveLyricsSession:
 			)
 			if key=='preview' and preview(apiURL)=='Not found':
 				self.override=True
+				self.result['preview'] = 'N/A'
+				self.result['lyrics'] = 'N/A'
 			elif key=='hometown' and preview(apiURL)=='':
 				self.result[key] = 'N/A'
 			else:
@@ -75,7 +77,7 @@ class iTunesLiveLyricsSession:
 		self.genre = kwargs.get('genre', 'N/A')
 		self.override = False
 		self.root = 'http://lyrics.wikia.com/'
-		self.result={}
+		self.result = {}
 		if len(kwargs)!=0:
 			self.query()
 			self.displaySession()
@@ -94,11 +96,11 @@ def preview(url):
 	return buf.readline().replace('\n','').replace('[...]','')
 
 def queryFormat(item):
-	result=''
+	result = ''
 	for i in range (0, len(item.split())):
-		result+=item.split()[i]
+		result += item.split()[i]
 		if i!=len(item.split())-1:
-			result+='_'
+			result += '_'
 	return result
 
 def wrap(lst):
@@ -107,15 +109,14 @@ def wrap(lst):
 	for i in lst:
 		if len(i)>max:
 			max = len(i)
-	border+='*'*(max+4)
-	max+=4
+	border += '*'*(max+4)
+	max += 4
 	print '\n'+border
 	for j in lst:
 		print '| '+j+' '*(max-1-len('| '+j))+'|'
 	print border+'\n'
 
 def main():
-	iTunes = SBApplication.applicationWithBundleIdentifier_("com.apple.iTunes")
 	try:
 		wrap(['Welcome to iTunesLiveLyrics client!', 'Version: 2.0'])
 		session = iTunesLiveLyricsSession()
