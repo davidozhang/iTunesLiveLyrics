@@ -9,10 +9,11 @@ Last Updated: Jan 25, 2015
 All lyrics fetched through the app belong to respective artists, owners,
 Lyrics Wiki and Gracenote. I do not own any of the lyrics contents.
 '''
-
 from Foundation import *
 from ScriptingBridge import *
+
 from bs4 import BeautifulSoup as bs
+
 import time
 import re
 import urllib
@@ -74,8 +75,8 @@ class iTunesLiveLyricsSession:
 		self.genre = kwargs.get('genre', 'N/A')
 		self.override = False
 		self.root = 'http://lyrics.wikia.com/'
-		self.result={}
-		if len(kwargs)!=0:
+		self.result = {'preview': 'N/A','hometown': 'N/A', 'lyrics': 'N/A'}
+		if len(kwargs)!=0 and self.artist!='' and self.track!='':
 			self.query()
 			self.displaySession()
 
@@ -93,11 +94,11 @@ def preview(url):
 	return buf.readline().replace('\n','').replace('[...]','')
 
 def queryFormat(item):
-	result=''
+	result = ''
 	for i in range (0, len(item.split())):
-		result+=item.split()[i]
+		result += item.split()[i]
 		if i!=len(item.split())-1:
-			result+='_'
+			result += '_'
 	return result
 
 def wrap(lst):
@@ -106,8 +107,8 @@ def wrap(lst):
 	for i in lst:
 		if len(i)>max:
 			max = len(i)
-	border+='*'*(max+4)
-	max+=4
+	border += '*'*(max+4)
+	max += 4
 	print '\n'+border
 	for j in lst:
 		print '| '+j+' '*(max-1-len('| '+j))+'|'
