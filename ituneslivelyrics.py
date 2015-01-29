@@ -37,8 +37,6 @@ class iTunesLiveLyricsSession:
 			)
 			if key=='preview' and preview(apiURL)=='Not found':
 				self.override=True
-				self.result['preview'] = 'N/A'
-				self.result['lyrics'] = 'N/A'
 			elif key=='hometown' and preview(apiURL)=='':
 				self.result[key] = 'N/A'
 			else:
@@ -77,8 +75,8 @@ class iTunesLiveLyricsSession:
 		self.genre = kwargs.get('genre', 'N/A')
 		self.override = False
 		self.root = 'http://lyrics.wikia.com/'
-		self.result = {}
-		if len(kwargs)!=0:
+		self.result = {'preview': 'N/A','hometown': 'N/A', 'lyrics': 'N/A'}
+		if len(kwargs)!=0 and self.artist!='' and self.track!='':
 			self.query()
 			self.displaySession()
 
