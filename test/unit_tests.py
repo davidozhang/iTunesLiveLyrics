@@ -73,3 +73,23 @@ def invalid_artist_no_track_test():
 	assert_equal(test.genre, 'N/A')
 	assert_equal(test.result['preview'], 'N/A')
 	assert_equal(test.result['lyrics'], 'N/A')
+
+def artist_with_feature_test():
+	test = iTunesLiveLyricsSession(
+		artist = 'Tim McGraw Feat. Taylor Swift & Keith Urban',
+		track = 'Highway Don\'t Care',
+	)
+	assert_equal(test.artist, 'Tim McGraw')
+	assert_equal(test.track, 'Highway Don\'t Care')
+	assert_equal(test.album, 'N/A')
+	assert_equal(test.genre, 'N/A')
+	print test.result['lyrics']
+
+def track_with_brackets_test():
+	test = iTunesLiveLyricsSession(
+		artist = 'James Newton Howard',
+		track = 'The Hanging Tree (feat. Jennifer Lawrence)',
+	)
+	assert_equal(test.artist, 'James Newton Howard')
+	assert_equal(test.track, 'The Hanging Tree')
+	print test.result['lyrics']

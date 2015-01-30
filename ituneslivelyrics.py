@@ -52,11 +52,10 @@ class iTunesLiveLyricsSession:
 									)
 
 	def header(self):
-		lst = ['NOW PLAYING: {0} - {1}'.format(self.artist, self.track),
+		wrap(['NOW PLAYING: {0} - {1}'.format(self.artist, self.track),
 			   'Album: '+self.album,
 			   'Genre: '+self.genre,
-			   'Hometown: '+self.result['hometown']]
-		wrap(lst)
+			   'Hometown: '+self.result['hometown']])
 
 	def lyrics(self):
 		print self.result.get('lyrics', 'N/A')
@@ -69,8 +68,8 @@ class iTunesLiveLyricsSession:
 			self.lyrics()
 
 	def __init__(self, *args, **kwargs):
-		self.artist = kwargs.get('artist','N/A')
-		self.track = kwargs.get('track', 'N/A')
+		self.artist = strip(kwargs.get('artist','N/A'))
+		self.track = strip(kwargs.get('track', 'N/A'))
 		self.album = kwargs.get('album', 'N/A')
 		self.genre = kwargs.get('genre', 'N/A')
 		self.override = False
@@ -87,6 +86,17 @@ def html(root, artist, track):
 def sanitize(html, firstLine):
 	result = html[html.index(firstLine):html.index('<p>NewPP')]
 	return str(bs(result.replace('<br/>','\n')).text.encode('utf_8'))
+
+def strip(item):
+	if '(' in item or ')' in item:
+		item = re.sub(r'\(.*\)','', item).strip()
+	if '[' in item or ']' in item:
+		item = re.sub(r'\[.*\]','', item).strip()
+	if ' ft. ' in item.lower() or ' ft ' in item.lower():
+		item = item[:item.lower().index(' ft')].strip()
+	if ' feat. ' in item.lower() or ' feat ' in item.lower():
+		item = item[:item.lower().index(' feat')].strip()
+	return item
 
 def preview(url):
 	r = requests.get(url)
@@ -111,28 +121,30 @@ def wrap(lst):
 	max += 4
 	print '\n'+border
 	for j in lst:
-		print '| '+j+' '*(max-1-len('| '+j))+'|'
+		print '* '+j+' '*(max-1-len('* '+j))+'*'
 	print border+'\n'
 
 def main():
-	try:
-		wrap(['Welcome to iTunesLiveLyrics client!', 'Version: 2.0'])
-		session = iTunesLiveLyricsSession()
-		while True:
-			time.sleep(2)
-			itunes = iTunes.currentTrack()
-			if itunes.artist()!=session.artist or itunes.name()!=session.track:
-				session = iTunesLiveLyricsSession(
-					artist=itunes.artist(),
-					track=itunes.name(),
-					album=itunes.album(),
-					genre=itunes.genre(),
-				)
+	#try:
+	wrap(['Welcome to iTunesLiveLyrics client!', 'Version: 2.0'])
+	session = iTunesLiveLyricsSession()
+	while True:
+		time.sleep(2)
+		itunes = iTunes.currentTrack()
+		if strip(itunes.artist())!=session.artist or \
+		   strip(itunes.name())!=session.track:
+			session = iTunesLiveLyricsSession(
+				artist=itunes.artist(),
+				track=itunes.name(),
+				album=itunes.album(),
+				genre=itunes.genre(),
+			)
+	'''
 	except TypeError:
 		wrap(['iTunesLiveLyrics detected no active iTunes song session.',
 			  'Play your iTunes song then reload the client. Thanks!'])
 	except:
 		wrap(['iTunesLiveLyrics client has been closed.'])
-	
+	'''
 if __name__=="__main__":
 	main()
