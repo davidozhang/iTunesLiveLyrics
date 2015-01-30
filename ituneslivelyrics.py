@@ -89,14 +89,14 @@ def sanitize(html, firstLine):
 
 def strip(item):
 	if '(' in item or ')' in item:
-		item = re.sub(r'\(.*\)','', item).strip()
+		item = re.sub(r'\(.*\)','', item)
 	if '[' in item or ']' in item:
-		item = re.sub(r'\[.*\]','', item).strip()
+		item = re.sub(r'\[.*\]','', item)
 	if ' ft. ' in item.lower() or ' ft ' in item.lower():
-		item = item[:item.lower().index(' ft')].strip()
+		item = item[:item.lower().index(' ft')]
 	if ' feat. ' in item.lower() or ' feat ' in item.lower():
-		item = item[:item.lower().index(' feat')].strip()
-	return item
+		item = item[:item.lower().index(' feat')]
+	return item.strip()
 
 def preview(url):
 	r = requests.get(url)
@@ -139,12 +139,12 @@ def main():
 					album=itunes.album(),
 					genre=itunes.genre(),
 				)
-	
+
 	except TypeError:
 		wrap(['iTunesLiveLyrics detected no active iTunes song session.',
 			  'Play your iTunes song then reload the client. Thanks!'])
 	except:
 		wrap(['iTunesLiveLyrics client has been closed.'])
-	
+
 if __name__=="__main__":
 	main()
