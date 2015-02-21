@@ -4,23 +4,23 @@
 iTunes Live Lyrics Mac Terminal Client
 Author: David Zhang
 Version: 2.0
-Last Updated: Jan 25, 2015
+Last Updated: Jan 30, 2015
 (C) Copyright David Zhang, 2015.
 All lyrics fetched through the app belong to respective artists, owners,
 Lyrics Wiki and Gracenote. I do not own any of the lyrics contents.
 '''
+import re
+import StringIO
+import time
+import urllib
+
+import requests
+
 from Foundation import *
 from ScriptingBridge import *
 
 from bs4 import BeautifulSoup as bs
 
-import time
-import re
-import urllib
-import requests
-import StringIO
-
-iTunes = SBApplication.applicationWithBundleIdentifier_("com.apple.iTunes")
 
 class iTunesLiveLyricsSession:
 
@@ -43,13 +43,13 @@ class iTunesLiveLyricsSession:
 				self.result[key] = preview(apiURL)
 		if not self.override:
 			self.result['lyrics'] = sanitize(
-										html(
-											self.root,
-											artistQuery,
-											trackQuery,
-										),
-										self.result['preview'],
-									)
+				html(
+					self.root,
+					artistQuery,
+					trackQuery,
+				),
+				self.result['preview'],
+			)
 
 	def header(self):
 		wrap(['NOW PLAYING: {0} - {1}'.format(self.artist, self.track),
@@ -89,14 +89,14 @@ def sanitize(html, firstLine):
 
 def strip(item):
 	if '(' in item or ')' in item:
-		item = re.sub(r'\(.*\)','', item).strip()
+		item = re.sub(r'\(.*\)','', item)
 	if '[' in item or ']' in item:
-		item = re.sub(r'\[.*\]','', item).strip()
+		item = re.sub(r'\[.*\]','', item)
 	if ' ft. ' in item.lower() or ' ft ' in item.lower():
-		item = item[:item.lower().index(' ft')].strip()
+		item = item[:item.lower().index(' ft')]
 	if ' feat. ' in item.lower() or ' feat ' in item.lower():
-		item = item[:item.lower().index(' feat')].strip()
-	return item
+		item = item[:item.lower().index(' feat')]
+	return item.strip()
 
 def preview(url):
 	r = requests.get(url)
@@ -125,6 +125,7 @@ def wrap(lst):
 	print border+'\n'
 
 def main():
+	iTunes = SBApplication.applicationWithBundleIdentifier_("com.apple.iTunes")
 	try:
 		wrap(['Welcome to iTunesLiveLyrics client!', 'Version: 2.0'])
 		session = iTunesLiveLyricsSession()
@@ -139,12 +140,11 @@ def main():
 					album=itunes.album(),
 					genre=itunes.genre(),
 				)
-	
 	except TypeError:
 		wrap(['iTunesLiveLyrics detected no active iTunes song session.',
 			  'Play your iTunes song then reload the client. Thanks!'])
 	except:
 		wrap(['iTunesLiveLyrics client has been closed.'])
-	
+
 if __name__=="__main__":
 	main()
